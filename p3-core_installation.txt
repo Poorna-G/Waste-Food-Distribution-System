@@ -1,0 +1,52 @@
+Step 1: Create core App
+
+👉 Inside your project folder (D:\food_waste_system), run:
+
+python manage.py startapp core
+📁 After Running This
+
+Django will automatically create this structure:
+
+core/
+├── __init__.py
+├── admin.py
+├── apps.py
+├── models.py
+├── views.py
+├── tests.py
+├── migrations/
+│   └── __init__.py
+
+✅ This is exactly what you need
+
+⚙️ Step 2: Register App in settings.py
+
+Open:
+
+food_waste_system/settings.py
+
+Find:
+
+INSTALLED_APPS = [
+
+Add this line:
+
+'core',
+📂 Step 3: Create Missing Files (Manually)
+
+Now create these manually 👇
+
+🔹 Create core/urls.py
+type nul > core\urls.py
+
+👉 Then open it and add:
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+]
+🔹 Create Templates Folder
+mkdir templates
+🔹 Create Static Folder
+mkdir static

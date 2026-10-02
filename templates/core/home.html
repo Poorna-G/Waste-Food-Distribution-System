@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Food Waste Distribution System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(to right, #eef2f3, #dfe9f3);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        /* Navbar */
+        
+        .navbar {
+            background: linear-gradient(90deg, #11998e, #38ef7d) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        /* Hero */
+        
+        .hero {
+            background: linear-gradient(135deg, #43cea2, #185a9d);
+            color: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            margin-bottom: 35px;
+        }
+        
+        .hero h1 {
+            font-size: 42px;
+            font-weight: 700;
+        }
+        
+        .hero p {
+            font-size: 18px;
+            opacity: .9;
+        }
+        /* Buttons */
+        
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 10px 18px;
+            transition: .3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+        }
+        /* Food Cards */
+        
+        .card {
+            border: none;
+            border-radius: 18px;
+            overflow: hidden;
+            transition: .4s ease;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .12);
+        }
+        
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, .2);
+        }
+        
+        .card-body {
+            background: white;
+            padding: 25px;
+        }
+        
+        .food-title {
+            font-size: 24px;
+            color: #11998e;
+            font-weight: 700;
+        }
+        
+        .card p {
+            color: #444;
+            line-height: 1.7;
+        }
+        /* Status badges */
+        
+        .badge {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        /* Search box */
+        
+        .search-box {
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+        }
+        /* Animation */
+        
+        .fade-in {
+            animation: fadeInUp .8s ease forwards;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* Footer */
+        
+        .footer {
+            margin-top: 60px;
+            padding: 20px;
+            text-align: center;
+            background: #212529;
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+
+            <a class="navbar-brand fw-bold" href="/">
+            🍱 Food Waste Distribution System
+        </a>
+
+            <div>
+                {% if user.is_authenticated %}
+                <span class="text-white me-3">
+                    Welcome, {{ user.username }}
+                </span>
+
+                <a href="/accounts/logout/" class="btn btn-danger btn-sm btn-custom">
+                    Logout
+                </a> {% else %}
+                <a href="/accounts/login/" class="btn btn-success btn-sm btn-custom">
+                    Login
+                </a>
+
+                <a href="/register/" class="btn btn-primary btn-sm btn-custom">
+                    Register
+                </a> {% endif %}
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="container mt-4">
+
+        <!-- HERO -->
+        <div class="container mt-4">
+            <div class="hero fade-in">
+                <h1>🍱 Save Food, Save Lives</h1>
+                <p>Connecting donors and volunteers to reduce food waste efficiently</p>
+            </div>
+        </div>
+
+        <!-- ROLE BUTTONS -->
+        {% if user.is_authenticated %}
+        <div class="mb-4 fade-in">
+
+            {% if user.userprofile.role == "donor" %}
+
+            <a href="/add-food/" class="btn btn-primary btn-custom">
+                ➕ Add Food
+            </a>
+
+            <a href="/manage-requests/" class="btn btn-info btn-custom">
+                📋 Manage Requests
+            </a> {% elif user.userprofile.role == "volunteer" %}
+
+            <a href="/my-requests/" class="btn btn-warning btn-custom">
+                📦 My Requests
+            </a>
+
+            <a href="/my-pickups/" class="btn btn-success btn-custom">
+                🚚 My Pickups
+            </a> {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- SEARCH -->
+        <input type="text" id="searchFood" class="form-control search-box mb-4" placeholder="Search food by name or location...">
+
+        <h2 class="mb-4">Available Food</h2>
+
+        <div class="row" id="foodContainer">
+
+            {% for food in foods %}
+            <div class="col-md-4 food-card fade-in">
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+
+                        <h4 class="food-title">{{ food.food_name }}</h4>
+
+                        <p>
+                            <b>Quantity:</b> {{ food.quantity }} <br>
+                            <b>Location:</b>
+                            <span class="food-location">
+                            {{ food.location }}
+                        </span><br>
+
+                            <b>Donor:</b> {{ food.donor.username }} <br>
+
+                            <b>Status:</b> {% if food.status == "Available" %}
+                            <span class="badge bg-success badge-status">
+                                Available
+                            </span> {% elif food.status == "Requested" %}
+                            <span class="badge bg-warning text-dark badge-status">
+                                Requested
+                            </span> {% elif food.status == "Accepted" %}
+                            <span class="badge bg-primary badge-status">
+                                Accepted
+                            </span> {% else %}
+                            <span class="badge bg-danger badge-status">
+                                Delivered
+                            </span> {% endif %}
+                        </p>
+
+                        {% if user.is_authenticated and user.userprofile.role == "volunteer" %} {% if food.status == "Available" %}
+                        <a href="/request-food/{{ food.id }}/" class="btn btn-primary btn-custom">
+                               Request Food
+                            </a> {% endif %} {% endif %}
+
+                    </div>
+                </div>
+
+            </div>
+
+            {% empty %}
+            <p>No food available.</p>
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+    <!-- JS SEARCH FILTER -->
+    <script>
+        document.getElementById("searchFood").addEventListener("keyup", function() {
+
+            let value = this.value.toLowerCase();
+            let cards = document.querySelectorAll(".food-card");
+
+            cards.forEach(card => {
+
+                let text = card.innerText.toLowerCase();
+
+                if (text.includes(value)) {
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
+                }
+
+            });
+
+        });
+    </script>
+
+
+</body>
+
+</html>

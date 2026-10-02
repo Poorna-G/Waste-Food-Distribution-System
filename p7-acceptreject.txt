@@ -1,0 +1,172 @@
+1.update models.py
+from django.db import models
+from django.contrib.auth.models import User
+
+
+# 👤 USER PROFILE (Role-based system)
+class UserProfile(models.Model):
+    ROLE_CHOICES = (
+        ('donor', 'Donor'),
+        ('volunteer', 'Volunteer'),
+    )
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+
+    def __str__(self):
+        return self.user.username
+
+
+# 🍱 FOOD POST
+class FoodPost(models.Model):
+    donor = models.ForeignKey(User, on_delete=models.CASCADE)
+    food_name = models.CharField(max_length=100)
+    quantity = models.CharField(max_length=50)
+    location = models.CharField(max_length=200)
+    expiry_time = models.DateTimeField()
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, default='Available')
+
+    def __str__(self):
+        return self.food_name
+
+
+# 🙋 REQUEST SYSTEM
+class Request(models.Model):
+    STATUS_CHOICES = (
+        ('Requested', 'Requested'),
+        ('Accepted', 'Accepted'),
+        ('Rejected', 'Rejected'),
+    )
+
+    food_post = models.ForeignKey(FoodPost, on_delete=models.CASCADE)
+    volunteer = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Requested')
+
+    def __str__(self):
+        return f"{self.volunteer.username} → {self.food_post.food_name}"
+
+
+# 🚚 PICKUP SYSTEM
+class Pickup(models.Model):
+    request = models.OneToOneField(Request, on_delete=models.CASCADE)
+    pickup_time = models.DateTimeField()
+    delivery_status = models.CharField(max_length=20, default='Pending')
+
+    def __str__(self):
+        return f"Pickup for {self.request.food_post.food_name}"
+
+
+
+Run Migrations
+python manage.py makemigrations
+python manage.py migrate
+🧱 STEP 2: Create View for Donor
+
+Open:
+
+core/views.py
+
+Add:
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def manage_requests(request):
+    # get requests for foods posted by this user
+    requests = Request.objects.filter(food_post__donor=request.user)
+    return render(request, 'core/manage_requests.html', {'requests': requests})
+🧱 STEP 3: Accept / Reject Views
+
+Add in views.py:
+
+@login_required
+def accept_request(request, request_id):
+    req = Request.objects.get(id=request_id)
+
+    # only donor can accept
+    if req.food_post.donor == request.user:
+        req.status = 'Accepted'
+        req.food_post.status = 'Accepted'
+        req.food_post.save()
+        req.save()
+
+    return redirect('manage_requests')
+
+
+@login_required
+def reject_request(request, request_id):
+    req = Request.objects.get(id=request_id)
+
+    if req.food_post.donor == request.user:
+        req.status = 'Rejected'
+        req.save()
+
+    return redirect('manage_requests')
+🧱 STEP 4: Add URLs
+
+Open:
+
+core/urls.py
+
+Add:
+
+path('manage-requests/', views.manage_requests, name='manage_requests'),
+path('accept-request/<int:request_id>/', views.accept_request, name='accept_request'),
+path('reject-request/<int:request_id>/', views.reject_request, name='reject_request'),
+🧱 STEP 5: Create Template
+
+Create:
+
+templates/core/manage_requests.html
+
+Add:
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Requests</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-4">
+
+    <h3>📋 Manage Requests</h3>
+
+    <a href="/" class="btn btn-secondary mb-3">← Back</a>
+
+    {% for req in requests %}
+        <div class="card mb-3 p-3">
+
+            <h5>{{ req.food_post.food_name }}</h5>
+
+            <p>
+                <b>Requested by:</b> {{ req.volunteer.username }} <br>
+                <b>Location:</b> {{ req.food_post.location }} <br>
+                <b>Status:</b> {{ req.status }}
+            </p>
+
+            {% if req.status == "Requested" %}
+                <a href="/accept-request/{{ req.id }}/" class="btn btn-success btn-sm">Accept</a>
+                <a href="/reject-request/{{ req.id }}/" class="btn btn-danger btn-sm">Reject</a>
+            {% endif %}
+
+        </div>
+    {% empty %}
+        <p>No requests</p>
+    {% endfor %}
+
+</div>
+
+</body>
+</html>
+🧱 STEP 6: Add Button in Home Page
+
+Open:
+
+templates/core/home.html
+
+👉 Add:
+
+<a href="/manage-requests/" class="btn btn-info">📋 Manage Requests</a>

@@ -1,0 +1,100 @@
+1. User Enters Website
+
+👉 Open:
+
+http://127.0.0.1:8000/
+What they see:
+List of available food
+Login / Register buttons
+🔐 2. User Authentication
+New User:
+
+👉 Click Register
+
+Create account
+Automatically logged in
+Existing User:
+
+👉 Click Login
+
+Enter username & password
+👤 3. After Login
+
+User sees:
+
+Welcome message (username)
+Add Food button
+Logout option
+🍱 4. Donor Adds Food
+
+👉 Click Add Food
+
+Fill form:
+
+Food name
+Quantity
+Location
+Expiry time
+Description
+
+👉 Click Submit
+
+What happens internally:
+Data sent to Django backend
+Saved in MySQL database
+Linked to that user (request.user)
+🏠 5. Food Appears on Homepage
+
+👉 After submit:
+
+Redirect to home page
+Food list updates
+
+Example:
+
+Rice - 4 plates - Hassan
+👀 6. Other Users View Food
+
+Any user can:
+
+See available food
+Decide to collect/request
+🔥 CURRENT SYSTEM (WHAT YOU BUILT)
+
+You already have:
+
+✔ User Registration
+✔ Login / Logout
+✔ Add Food
+✔ View Food
+✔ Database storage
+
+👉 This is MVP (Minimum Viable Product)
+
+7. Volunteer Requests Food (Next Feature)
+
+Flow:
+
+User clicks “Request Food”
+Request stored in DB
+Donor gets notified
+🚚 8. Pickup System
+Volunteer assigned
+Pickup time scheduled
+Status updated
+📊 9. Status Tracking
+
+Food status:
+
+Available
+Requested
+Picked
+Delivered
+🌐 10. Multi-language (your idea 🔥)
+
+User can switch:
+
+English
+Kannada
+Hindi
+

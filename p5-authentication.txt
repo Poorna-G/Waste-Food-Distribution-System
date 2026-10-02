@@ -1,0 +1,179 @@
+1. Update settings.py
+
+Open:
+
+food_waste_system/settings.py
+
+Add at bottom:
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+✅ 2. Update Main urls.py
+
+Open:
+
+food_waste_system/urls.py
+
+Modify:
+
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('core.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),  # ✅ ADD THIS
+]
+✅ 3. Create Templates Folder for Auth
+
+Create:
+
+core/templates/registration/
+✅ 4. Create Login Page
+
+Create file:
+
+core/templates/registration/login.html
+
+Add:
+
+<h2>Login</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Login</button>
+</form>
+
+<a href="/register/">Don't have account? Register</a>
+✅ 5. Create Register View
+
+Open:
+
+core/views.py
+
+Add:
+
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('home')
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'core/register.html', {'form': form})
+
+6. Create Register Template
+
+Create:
+
+templates/core/register.html
+
+Add:
+
+<h2>Register</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Register</button>
+</form>
+
+7. Update core/urls.py
+
+Replace your file with this:
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('add-food/', views.add_food, name='add_food'),
+    path('register/', views.register, name='register'),  # ✅ ADD THIS
+]
+🔍 Why This Is Needed
+
+👉 Without this line:
+
+path('register/', views.register, name='register')
+
+Django cannot open:
+
+http://127.0.0.1:8000/register/
+
+
+8. Secure Add Food Page
+
+Open:
+
+core/views.py
+
+Replace your entire file with this:
+
+from django.shortcuts import render, redirect
+from .models import FoodPost
+from .forms import FoodPostForm
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+
+
+# ✅ HOME VIEW
+def home(request):
+    foods = FoodPost.objects.all()
+    return render(request, 'core/home.html', {'foods': foods})
+
+
+# ✅ ADD FOOD (PROTECTED)
+@login_required
+def add_food(request):
+    if request.method == 'POST':
+        form = FoodPostForm(request.POST)
+        if form.is_valid():
+            food = form.save(commit=False)
+
+            # 🔥 REAL USER (IMPORTANT CHANGE)
+            food.donor = request.user
+
+            food.save()
+            return redirect('home')
+    else:
+        form = FoodPostForm()
+
+    return render(request, 'core/add_food.html', {'form': form})
+
+
+# ✅ REGISTER VIEW
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('home')
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'core/register.html', {'form': form})
+🔥 Key Changes (Very Important)
+✅ 1. Added:
+from django.contrib.auth.decorators import login_required
+✅ 2. Protected view:
+@login_required
+def add_food(request):
+
+👉 Now:
+
+Only logged-in users can access
+Others → redirected to login page
+✅ 3. Replaced this:
+User.objects.first()
+
+👉 WITH:
+food.donor = request.user

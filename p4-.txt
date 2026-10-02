@@ -1,0 +1,251 @@
+1. Create Templates Folder Structure
+
+Inside your project folder:
+
+mkdir templates
+mkdir templates\core
+
+👉 Final:
+
+templates/
+└── core/
+
+
+ 2. Configure Templates in settings.py
+
+Open settings.py → find TEMPLATES
+
+Update this line:
+
+'DIRS': [BASE_DIR / 'templates'],
+
+
+ 3. Create Form (IMPORTANT)
+
+Open:
+
+core/forms.py
+
+👉 If file not exists, create it.
+
+Add:
+
+from django import forms
+from .models import FoodPost
+
+class FoodPostForm(forms.ModelForm):
+    class Meta:
+        model = FoodPost
+        fields = ['food_name', 'quantity', 'location', 'expiry_time', 'description']
+
+
+
+ 4. Create Views
+
+Open:
+
+core/views.py
+
+
+
+from django.shortcuts import render, redirect
+from .models import FoodPost
+from .forms import FoodPostForm
+
+# Home page - list all food posts
+def home(request):
+    foods = FoodPost.objects.all()
+    return render(request, 'core/home.html', {'foods': foods})
+
+
+# Add food post
+def add_food(request):
+    if request.method == 'POST':
+        form = FoodPostForm(request.POST)
+        if form.is_valid():
+            food = form.save(commit=False)
+            food.donor = request.user   # logged-in user
+            food.save()
+            return redirect('home')
+    else:
+        form = FoodPostForm()
+
+    return render(request, 'core/add_food.html', {'form': form})
+
+5.core/models.py
+from django.db import models
+from django.contrib.auth.models import User
+
+class UserProfile(models.Model):
+    ROLE_CHOICES = (
+        ('donor', 'Donor'),
+        ('volunteer', 'Volunteer'),
+    )
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+
+    def __str__(self):
+        return self.user.username
+
+
+class FoodPost(models.Model):
+    donor = models.ForeignKey(User, on_delete=models.CASCADE)
+    food_name = models.CharField(max_length=100)
+    quantity = models.CharField(max_length=50)
+    location = models.CharField(max_length=200)
+    expiry_time = models.DateTimeField()
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, default='Available')
+
+    def __str__(self):
+        return self.food_name
+
+
+class Request(models.Model):
+    food_post = models.ForeignKey(FoodPost, on_delete=models.CASCADE)
+    volunteer = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, default='Requested')
+
+
+class Pickup(models.Model):
+    request = models.OneToOneField(Request, on_delete=models.CASCADE)
+    pickup_time = models.DateTimeField()
+    delivery_status = models.CharField(max_length=20, default='Pending')
+
+
+ 6. Update URLs
+👉 core/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('add-food/', views.add_food, name='add_food'),
+]
+
+ --->Main urls.py [inside food_waste_system]
+
+from django.contrib import admin
+from django.urls import path, include   # ✅ add include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('core.urls')),
+]
+
+🎨 7. Create HTML Files
+🟢 templates/core/home.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Food List</title>
+</head>
+<body>
+
+<h1>Available Food</h1>
+
+<a href="/add-food/">Add Food</a>
+
+<ul>
+    {% for food in foods %}
+        <li>
+            {{ food.food_name }} - {{ food.quantity }} - {{ food.location }}
+        </li>
+    {% empty %}
+        <li>No food available</li>
+    {% endfor %}
+</ul>
+
+</body>
+</html>
+
+ templates/core/add_food.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Food</title>
+</head>
+<body>
+
+<h1>Add Food</h1>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit</button>
+</form>
+
+</body>
+</html>
+
+8.Run Migrations Again
+python manage.py makemigrations
+python manage.py migrate
+
+
+9.: Run Server
+python manage.py runserver
+
+
+10.update core/views.py
+from django.shortcuts import render, redirect
+from .models import FoodPost
+from .forms import FoodPostForm
+from django.contrib.auth.models import User
+
+
+# ✅ HOME VIEW (IMPORTANT - was missing)
+def home(request):
+    foods = FoodPost.objects.all()
+    return render(request, 'core/home.html', {'foods': foods})
+
+
+# ✅ ADD FOOD VIEW
+def add_food(request):
+    if request.method == 'POST':
+        form = FoodPostForm(request.POST)
+        if form.is_valid():
+            food = form.save(commit=False)
+
+            # 🔥 SAFETY CHECK
+            user = User.objects.first()
+
+            if user is None:
+                return render(request, 'core/add_food.html', {
+                    'form': form,
+                    'error': 'No user found. Please create a user first.'
+                })
+
+            food.donor = user
+            food.save()
+
+            return redirect('home')
+    else:
+        form = FoodPostForm()
+
+    return render(request, 'core/add_food.html', {'form': form})
+
+
+
+
+
+
+11.VERY IMPORTANT (Do this once)
+
+You must have at least one user in database.
+
+👉 Create user quickly:
+
+Run this in terminal:
+
+python manage.py createsuperuser
+
+Fill:
+
+username(Poornesha)
+email(gpoornesha913@gmail.com)
+password(rukku@098)
+
+12.start server:
+python manage.py runserver

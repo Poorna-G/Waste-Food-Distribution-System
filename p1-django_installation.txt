@@ -1,0 +1,58 @@
+Step 1: Install Django
+
+Run this command:
+
+python -m pip install django
+📦 What this does
+Installs Django into your Python 3.9
+Makes python -m django work
+
+🔍 Step 2: Check Installation
+
+After installing, run:
+
+python -m django --version
+
+👉 You should see something like:
+
+5.x.x
+
+✅ That means Django is installed
+
+🚀 Step 3: Create Project
+
+Now run:
+
+python -m django startproject food_waste_system
+
+📂 Step 4: Enter Folder
+cd food_waste_system
+
+▶️ Step 5: Run Server
+python manage.py runserver
+Open browser:
+
+http://127.0.0.1:8000/
+
+✅ You should see Django welcome page 🎉
+
+
+-----if error occur------
+Fix: Apply Migrations
+
+Stop server (CTRL + C) and run:
+
+python manage.py migrate
+✅ After running:
+
+You’ll see:
+
+Applying admin...
+Applying auth...
+Applying sessions...
+
+👉 This creates your database tables
+
+▶️ Run Server Again
+python manage.py runserver
+--------------------------

@@ -1,0 +1,59 @@
+1. Create Database in MySQL
+
+//Open MySQL Command Line Client or Workbench and run:
+
+CREATE DATABASE food_waste_db;
+
+2. Configure settings.py
+
+Open:
+
+food_waste_system/settings.py
+
+Find this section:
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+    }
+}
+
+👉 Replace it with:
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'food_waste_db',
+        'USER': 'root',
+        'PASSWORD': 'your_mysql_password',
+        'HOST': 'localhost',
+        'PORT': '3306',
+    }
+}
+
+⚠️ Replace:
+
+'your_mysql_password' → your actual MySQL password
+
+
+3. Apply Migrations (IMPORTANT)
+
+Now run:
+
+python manage.py migrate
+
+👉 This will create all Django tables inside MySQL
+
+4. Verify in MySQL
+
+Run:
+
+USE food_waste_db;
+SHOW TABLES;
+
+✅ You should see:
+
+auth_user
+django_admin_log
+sessions
+etc.

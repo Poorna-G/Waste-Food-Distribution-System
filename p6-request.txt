@@ -1,0 +1,131 @@
+Register in Admin
+
+Open:
+
+core/admin.py
+
+Add:
+
+from django.contrib import admin   
+from .models import FoodPost, Request
+
+admin.site.register(FoodPost)
+admin.site.register(Request)
+
+STEP 3: Create Request View
+
+Open:
+
+core/views.py
+
+Add this 👇
+
+from .models import Request
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def request_food(request, food_id):
+    food = FoodPost.objects.get(id=food_id)
+
+    # prevent duplicate request
+    if not Request.objects.filter(food_post=food, volunteer=request.user).exists():
+        Request.objects.create(
+            food_post=food,
+            volunteer=request.user
+        )
+
+        # update food status
+        food.status = "Requested"
+        food.save()
+
+    return redirect('home')
+🧱 STEP 4: Add URL
+
+Open:
+
+core/urls.py
+
+Add:
+
+path('request-food/<int:food_id>/', views.request_food, name='request_food'),
+🧱 STEP 5: Add Button in UI
+
+Open:
+
+templates/core/home.html
+
+👉 Inside your food card, add this:
+
+{% if user.is_authenticated %}
+    <a href="/request-food/{{ food.id }}/" class="btn">Request Food</a>
+{% endif %}
+
+
+-------------------------------------------------------------------------------------
+STEP 1: Create View
+
+Open:
+
+core/views.py
+
+Add this:
+
+from .models import Request
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def my_requests(request):
+    requests = Request.objects.filter(volunteer=request.user)
+    return render(request, 'core/my_requests.html', {'requests': requests})
+🧱 STEP 2: Add URL
+
+Open:
+
+core/urls.py
+
+Add:
+
+path('my-requests/', views.my_requests, name='my_requests'),
+🧱 STEP 3: Create Template
+
+Create file:
+
+templates/core/my_requests.html
+
+Add:
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Requests</title>
+</head>
+<body>
+
+<h2>My Requested Food</h2>
+
+<a href="/">← Back to Home</a>
+
+<hr>
+
+{% for req in requests %}
+    <div style="border:1px solid gray; padding:10px; margin:10px;">
+        <h3>{{ req.food_post.food_name }}</h3>
+        <p><b>Quantity:</b> {{ req.food_post.quantity }}</p>
+        <p><b>Location:</b> {{ req.food_post.location }}</p>
+        <p><b>Status:</b> {{ req.status }}</p>
+    </div>
+{% empty %}
+    <p>No requests yet</p>
+{% endfor %}
+
+</body>
+</html>
+🧱 STEP 4: Add Button in Home Page
+
+Open:
+
+templates/core/home.html
+
+👉 Add this under Add Food button:
+
+<a href="/my-requests/" class="btn">📦 My Requests</a>
